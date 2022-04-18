@@ -60,7 +60,7 @@ public class CMISQuery {
 			} else {
 				System.out.println("Connected to Alfresco....\n");
 				
-				String queryString1 = "select * from cmis:folder where cmis:name = 'Sites'"; // Sites/swsdp/documentLibrary;
+				//String queryString1 = "select * from cmis:folder where cmis:name = 'Sites'"; // Sites/swsdp/documentLibrary;
 				String queryString = "select * from st:sites";
 				ItemIterable<QueryResult> results = alfSession.query(queryString, false);
 				String objectId = "";
@@ -80,28 +80,51 @@ public class CMISQuery {
 				int skipCount = 10;
 				int page_num = 1;
 				OperationContext operationContext = alfSession.createOperationContext();
-				String queryString2 = "select * from cmis:document where in_tree('" + folder.getId() + "')";
-				//String queryString3 = "SELECT * FROM cmis:document WHERE IN_FOLDER('" + folder.getId() + "')";
+				// Get length of file in bytes
+				//long fileSizeInBytes = file.length();
+				// Convert the bytes to Kilobytes (1 KB = 1024 Bytes)
+				//long fileSizeInKB = fileSizeInBytes / 1024;
+				// Convert the KB to MegaBytes (1 MB = 1024 KBytes)
+				//long fileSizeInMB = fileSizeInKB / 1024;
+				
+				//String queryString2 = "select * from cmis:document where in_tree('" + folder.getId() + "') AND cmis:contentStreamMimeType='image/jpeg' AND cmis:contentStreamLength<=(cmis:contentStreamLength/1024)";
+				String queryString2 = "select cmis:objectId,\r\n"
+						+ "				cmis:name,\r\n"
+						+ "				cmis:createdBy,\r\n"
+						+ "				cmis:contentStreamFileName,\r\n"
+						+ "				cmis:contentStreamMimeType,\r\n"
+						+ "				cmis:contentStreamLength from cmis:document where in_tree('" + folder.getId() + "')";
+				//String queryString2 = "SELECT * FROM cmis:document WHERE in_tree('" + folder.getId() + "')";
+				 
+				String queryString3 = "SELECT * FROM cmis:document WHERE IN_FOLDER('" + folder.getId() + "')";
 				System.out.println("***results from queryString2*********** " + queryString2);
 				ItemIterable<QueryResult> res2 = alfSession.query(queryString2, false,operationContext).skipTo(page_num * maxItemsPerPage).getPage(maxItemsPerPage);
+				
+				List<CsvModelData> queryres = new ArrayList<>();
+				//CsvModelData csvmodel =null;
+				//queryres.add(1,objectId,objectName,createdBy,contentStreamFileName,contentStreamMimeType,contentStreamLength);
+				int i = 1;
+				for (QueryResult qr : results) {
+					
+					CsvModelData duplicatelist = new CsvModelData(qr.getPropertyByQueryName("cmis:objectId").getFirstValue().toString(), 
+							qr.getPropertyByQueryName("cmis:name").getFirstValue().toString(),
+							qr.getPropertyByQueryName("cmis:createdBy").getFirstValue().toString(), 
+							qr.getPropertyByQueryName("cmis:contentStreamFileName").getFirstValue().toString(),
+							qr.getPropertyByQueryName("cmis:contentStreamMimeType").getFirstValue().toString(),
+							qr.getPropertyByQueryName("cmis:contentStreamLength").getFirstValue().toString());
+					i++;
+					queryres.add(duplicatelist);
+					
+				}
+				System.out.println("***duplicatelist*********** " + queryres);
 				System.out.println("***TotalCount*********** " + res2.getTotalNumItems());
 				for (QueryResult result : res2) {
 					for (PropertyData<?> prop : result.getProperties()) {
-						System.out.println(prop.getQueryName() + ": " + prop.getFirstValue());				
+						System.out.println(prop.getQueryName() + ": " + prop.getFirstValue());	
 					}
+					System.out.println("-------------------Next One@@@@@@@@@@@@@@@-------------------");
 				}
 				System.out.println(res2.getHasMoreItems());
-			
-										
-				//System.out.println("***results from queryString3 " + queryString3);
-				//dumpQueryResults(getQueryResults(queryString2));
-				//Document document = (Document) object;
-               // long fileLength = document.getContentStreamLength();
-                //String fileName = document.getContentStreamFileName();
-                //String mimeType = document.getContentStreamMimeType();
-               // System.out.println("***results from fileName******" + fileName);
-				//System.out.println("***results from mimeType******" + mimeType);
-				//System.out.println("***results from fileLength******" + fileLength);
 				
 				System.out.println("-------------------@@@@@@@@@@@@@@@-------------------");
 				
