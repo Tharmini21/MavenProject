@@ -1,13 +1,27 @@
 package com.simplelearn.mavenproject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.*;
+import java.util.Comparator;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import com.opencsv.CSVWriter;
 import org.apache.chemistry.opencmis.client.api.CmisObject;
 import org.apache.chemistry.opencmis.client.api.Document;
 import org.apache.chemistry.opencmis.client.api.FileableCmisObject;
@@ -38,21 +52,22 @@ import com.opencsv.bean.StatefulBeanToCsvBuilder;
 
 public class CMISQuery {
 
-	String username = "admin";
-	String password = "admin";
-	String hostName = "http://localhost:8080";
-	AlfrescoUtilityImpl alfrescoHelper = new AlfrescoUtilityImpl();
-	Session alfSession = alfrescoHelper.createSession(username, password, hostName);
+	static String username = "admin";
+	static String password = "admin";
+	static String hostName = "http://localhost:8080";
+	static AlfrescoUtilityImpl alfrescoHelper = new AlfrescoUtilityImpl();
+	static Session alfSession = alfrescoHelper.createSession(username, password, hostName);
 
 	public static void main(String[] args) {
 		try {
 
 			System.out.println("\n\nStarting .....\n");
-			String username = "admin";
-			String password = "admin";
-			String hostName = "http://localhost:8080";
-			AlfrescoUtilityImpl alfrescoHelper = new AlfrescoUtilityImpl();
-			Session alfSession = alfrescoHelper.createSession(username, password, hostName);
+			// String username = "admin";
+			// String password = "admin";
+			// String hostName = "http://localhost:8080";
+			// AlfrescoUtilityImpl alfrescoHelper = new AlfrescoUtilityImpl();
+			// Session alfSession = alfrescoHelper.createSession(username, password,
+			// hostName);
 
 			if (alfSession == null) {
 				System.out.println("Error Connecting to Alfresco....");
@@ -61,34 +76,31 @@ public class CMISQuery {
 				System.out.println("Connected to Alfresco....\n");
 				CMISQuery myObj = new CMISQuery(); // Create an object of Main
 				myObj.GetDocumentData();
-				String queryString = "select * from st:sites";
-				ItemIterable<QueryResult> results = alfSession.query(queryString, false);
-				String objectId = "";
-				for (QueryResult result : results) {
-					objectId = result.getPropertyValueByQueryName("cmis:objectId");
-				}
-				CmisObject object = alfSession.getObject(objectId);
-				Folder folder = (Folder) object;
-				int maxItemsPerPage = 50;
-				int skipCount = 0;
-				int page_num = 0;
-				OperationContext operationContext = alfSession.createOperationContext();
-				String queryString2 = "SELECT cmis:objectId,cmis:name,cmis:createdBy,cmis:contentStreamFileName,cmis:contentStreamMimeType,cmis:contentStreamLength FROM cmis:document WHERE in_tree('"
-						+ folder.getId() + "') order by cmis:name, cmis:contentStreamMimeType";
-				String queryString4 = "SELECT cmis:objectId,cmis:name,cmis:createdBy,cmis:contentStreamFileName,cmis:contentStreamMimeType,cmis:contentStreamLength,COUNT(cmis:name) from cmis:document GROUP BY cmis:name HAVING COUNT(cmis:name) > 1";
-				ItemIterable<QueryResult> res2 = alfSession.query(queryString2, false, operationContext);
-				// .skipTo(page_num * maxItemsPerPage).getPage(maxItemsPerPage);
-				System.out.println("***Res*********** " + queryString2);
-				System.out.println("***TotalCount*********** " + res2.getTotalNumItems());
-				for (QueryResult res : res2) {
-					for (PropertyData<?> prop : res.getProperties()) {
-						System.out.println(prop.getQueryName() + ": " + prop.getFirstValue());
-					}
-					System.out.println("-------------------Next One@@@@@@@@@@@@@@@-------------------");
-				}
-				page_num++;
-				System.out.println(res2.getHasMoreItems());
-				System.out.println("-------------------@Done@-------------------");
+				myObj.duplicatefile();
+				/*
+				 * String queryString = "select * from st:sites"; ItemIterable<QueryResult>
+				 * results = alfSession.query(queryString, false); String objectId = ""; for
+				 * (QueryResult result : results) { objectId =
+				 * result.getPropertyValueByQueryName("cmis:objectId"); } CmisObject object =
+				 * alfSession.getObject(objectId); Folder folder = (Folder) object; int
+				 * maxItemsPerPage = 50; int skipCount = 0; int page_num = 0; OperationContext
+				 * operationContext = alfSession.createOperationContext(); String queryString2 =
+				 * "SELECT cmis:objectId,cmis:name,cmis:createdBy,cmis:contentStreamFileName,cmis:contentStreamMimeType,cmis:contentStreamLength FROM cmis:document WHERE in_tree('"
+				 * + folder.getId() + "') order by cmis:name, cmis:contentStreamMimeType";
+				 * String queryString4 =
+				 * "SELECT cmis:objectId,cmis:name,cmis:createdBy,cmis:contentStreamFileName,cmis:contentStreamMimeType,cmis:contentStreamLength,COUNT(cmis:name) from cmis:document GROUP BY cmis:name HAVING COUNT(cmis:name) > 1"
+				 * ; ItemIterable<QueryResult> res2 = alfSession.query(queryString2, false,
+				 * operationContext); // .skipTo(page_num *
+				 * maxItemsPerPage).getPage(maxItemsPerPage);
+				 * System.out.println("***Res*********** " + queryString2);
+				 * System.out.println("***TotalCount*********** " + res2.getTotalNumItems());
+				 * for (QueryResult res : res2) { for (PropertyData<?> prop :
+				 * res.getProperties()) { System.out.println(prop.getQueryName() + ": " +
+				 * prop.getFirstValue()); } System.out.
+				 * println("-------------------Next One@@@@@@@@@@@@@@@-------------------"); }
+				 * page_num++; System.out.println(res2.getHasMoreItems());
+				 * System.out.println("-------------------@Done@-------------------");
+				 */
 			}
 			System.exit(0);
 
@@ -110,58 +122,128 @@ public class CMISQuery {
 		CmisObject object = alfSession.getObject(objectId);
 		Folder folder = (Folder) object;
 		String query = "SELECT cmis:objectId,cmis:name,cmis:createdBy,cmis:contentStreamFileName,cmis:contentStreamMimeType,cmis:contentStreamLength FROM cmis:document WHERE in_tree('"
-				+ folder.getId() + "') order by cmis:name, cmis:contentStreamMimeType";
-		String csvFilePath = "DocumentsqlData-export.csv";
-		//Statement statement = (Statement) alfSession.createQueryStatement(query);
-		//Statement statement = query.
+				+ folder.getId() + "') order by cmis:name";
+		String csvFilePath = "C://Users//Tharmini//Downloads//DocumentsqlData-export.csv";
+		// Statement statement = (Statement) alfSession.createQueryStatement(query);
 		QueryStatement qs = alfSession.createQueryStatement(query);
 		String statement = qs.toQueryString();
 		ItemIterable<QueryResult> resultset = qs.query(false);
 
-		System.out.println("QueryStatement:"+ qs);
-		System.out.println("Statement:"+ statement);
+		System.out.println("QueryStatement:" + qs);
+		System.out.println("Statement:" + statement);
 		ItemIterable<QueryResult> res2 = alfSession.query(query, false);
-		ResultSet results = null;
-		PreparedStatement statement1 = null;
-		//Statement stmt=(Statement) statement;
-		//results = stmt.executeQuery();
-		try {
-			//results = statement.executeQuery(query);
-			results = null;
-			//results = res2.;
+		System.out.println("***TotalCount*********** " + res2.getTotalNumItems());
 
-		} catch (Exception e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
 		try {
 			BufferedWriter fileWriter = new BufferedWriter(new FileWriter(csvFilePath));
-
 			// write header line containing column names
 			fileWriter.write(
 					"cmis_objectId,cmis_name,cmis_createdBy,cmis_contentStreamFileName,cmis_contentStreamMimeType,cmis_contentStreamLength");
 
-			while (results.next()) {
-				String ObjectId = results.getString("cmis:objectId");
-				String Name = results.getString("cmis:name");
-				String CreatedBy = results.getString("cmis:createdBy");
-				String ContentStreamFileName = results.getString("cmis:contentStreamFileName");
-				String ContentStreamMimeType = results.getString("cmis:contentStreamMimeType");
-				String ContentStreamLength = results.getString("cmis:contentStreamLength");
+			for (QueryResult response : res2) {
+				for (PropertyData<?> prop : response.getProperties()) {
+					System.out.println(prop.getQueryName() + ": " + prop.getFirstValue());
+				}
+				System.out.println("-------------------Next One@@@@@@@@@@@@@@@-------------------");
+				String ObjectId = response.getPropertyValueByQueryName("cmis:objectId");
+				String Name = response.getPropertyValueByQueryName("cmis:name");
+				String CreatedBy = response.getPropertyValueByQueryName("cmis:createdBy");
+				String ContentStreamFileName = response.getPropertyValueByQueryName("cmis:contentStreamFileName");
+				String ContentStreamMimeType = response.getPropertyValueByQueryName("cmis:contentStreamMimeType");
+				BigInteger ContentStreamLength = response.getPropertyValueByQueryName("cmis:contentStreamLength");
 
-				String line = String.format("\"%s\",%s,%.1f,%s,%s", ObjectId, Name, CreatedBy, ContentStreamFileName,
+				String line = String.format("\"%s\",%s,%s,%s,%s,%s", ObjectId, Name, CreatedBy, ContentStreamFileName,
 						ContentStreamMimeType, ContentStreamLength);
 
 				fileWriter.newLine();
 				fileWriter.write(line);
 			}
+			System.out.println(res2.getHasMoreItems());
+			System.out.println("-------------------@Done@-------------------");
 
-			//statement.close();
+			// while (results.next()) {
+
+			// }
+
+			// statement.close();
 			fileWriter.close();
 		} catch (Exception e) {
 			System.out.println("Error Occured...");
 			e.printStackTrace();
 		}
+		ResultSet results = null;
+		PreparedStatement statement1 = null;
+		try {
+			results = null;
+
+		} catch (Exception e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+
+	}
+
+	public void duplicatefile() {
+		String line = "";
+		String splitBy = ",";
+		String csvFile = "C://Users//Tharmini//Downloads//DocumentsqlData-export.csv";
+		try {
+
+			List<String> validationFile = new ArrayList<>();
+
+			BufferedReader br = new BufferedReader(new FileReader(csvFile));
+			while ((line = br.readLine()) != null) // returns a Boolean value
+			{
+				String[] grouped = line.split(splitBy); // use comma as separator
+				validationFile.add(line);
+			}
+			List<String> validationFileCopy = Collections.unmodifiableList(validationFile);
+			// System.out.println(validationFile);
+			for (String lineres : validationFile) {
+				int comp = Collections.binarySearch(validationFileCopy, lineres, new ComparatorLine());
+				if (comp > 0) {
+					System.out.println(lineres);
+				}
+			}
+			Set<String> uniqueLines = new HashSet<>();
+			Set<String> duplicateLines = new HashSet<>();
+			for (String newline : validationFile) {
+				if (!uniqueLines.add(newline.toLowerCase())) {
+				 duplicateLines.add(newline.toLowerCase());
+				}
+			}
+			Set<String> uniques = new HashSet<>();      
+			List<Object> duplicates = validationFile.stream().filter(i->!uniqueLines.add(i)).collect(Collectors.toList());
+		    System.out.println("duplicateLines" +duplicates);
+			System.out.println("uniqueLines" + uniqueLines);
+			 System.out.println("duplicateLines" +duplicateLines);
+			// Option 3 : unique lines and duplicate lines by Java Streams
+			/*
+			 * Set<String> uniquesJava8 = new HashSet<>(); List<String> duplicatesJava8 =
+			 * validationFile .stream() .filter(element ->
+			 * !uniquesJava8.add(element.toLowerCase())) .map(element ->
+			 * element.toLowerCase()) .collect(Collectors.toList());
+			 */
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		/*
+		 * var lines = File.ReadLines("yourFile.ext"); // uniqueness is defined by the
+		 * first two columns var grouped = lines.GroupBy(line => string.Join(", ",
+		 * line.Split(',').Take(2))).ToArray();
+		 * 
+		 * // "unique entry and first occurrence of duplicate entry" -> first entry in
+		 * group var unique = grouped.Select(g => g.First()); var dupes =
+		 * grouped.Where(g => g.Count() > 1).SelectMany(g => g);
+		 * 
+		 * Console.WriteLine("unique"); foreach (var name in unique)
+		 * Console.WriteLine(name);
+		 * 
+		 * Console.WriteLine("\nDupes"); foreach (var name in dupes)
+		 * Console.WriteLine(name);
+		 */
 	}
 
 	public List<CsvModelData> listduplicatefiles() {
@@ -170,7 +252,7 @@ public class CMISQuery {
 		Session session = cmisClient.getSession(connectionName, "admin", "admin");
 		String queryString = "select * from st:sites";
 		ItemIterable<QueryResult> results = alfSession.query(queryString, false);
-				
+
 		List<CsvModelData> questres = new ArrayList<>();
 		List<CsvModelData> data = new ArrayList<>();
 
