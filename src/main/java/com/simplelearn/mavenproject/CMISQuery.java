@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -49,6 +50,7 @@ import com.opencsv.CSVWriter;
 import com.opencsv.bean.ColumnPositionMappingStrategy;
 import com.opencsv.bean.StatefulBeanToCsv;
 import com.opencsv.bean.StatefulBeanToCsvBuilder;
+import java.util.Scanner;
 
 public class CMISQuery {
 
@@ -123,17 +125,14 @@ public class CMISQuery {
 		Folder folder = (Folder) object;
 		String query = "SELECT cmis:objectId,cmis:name,cmis:createdBy,cmis:contentStreamFileName,cmis:contentStreamMimeType,cmis:contentStreamLength FROM cmis:document WHERE in_tree('"
 				+ folder.getId() + "') order by cmis:name";
-		String csvFilePath = "C://Users//Tharmini//Downloads//DocumentsqlData-export.csv";
+		String csvFilePath = "C://Users//Tharmini//Downloads//sqlData-export.csv";
 		// Statement statement = (Statement) alfSession.createQueryStatement(query);
 		QueryStatement qs = alfSession.createQueryStatement(query);
 		String statement = qs.toQueryString();
-		ItemIterable<QueryResult> resultset = qs.query(false);
-
-		System.out.println("QueryStatement:" + qs);
-		System.out.println("Statement:" + statement);
 		ItemIterable<QueryResult> res2 = alfSession.query(query, false);
 		System.out.println("***TotalCount*********** " + res2.getTotalNumItems());
 
+		// ResultSet rs=new ResultSet();
 		try {
 			BufferedWriter fileWriter = new BufferedWriter(new FileWriter(csvFilePath));
 			// write header line containing column names
@@ -184,39 +183,66 @@ public class CMISQuery {
 	}
 
 	public void duplicatefile() {
+		String csvFile = "C://Users//Tharmini//Downloads//DocumentsqlData-export.csv";
+		try {
+			List<String> readAllLines = Files.readAllLines(Paths.get(csvFile));
+			Set<String> names = new HashSet<>();
+			/*
+			 * readAllLines.stream().map(s -> s.split(",")[1]).forEach(name -> { if
+			 * (!names.add(name)) { System.out.println("Duplicate name: " + name); } });
+			 */
+			readAllLines.stream().forEach(record -> {
+				String name = record.split(",")[1];
+				if (!names.add(name)) {
+					System.out.println("Duplicate name: " + name + " with record " + record);
+				}
+			});
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	public void duplicatefile1() {
 		String line = "";
 		String splitBy = ",";
 		String csvFile = "C://Users//Tharmini//Downloads//DocumentsqlData-export.csv";
 		try {
 
-			List<String> validationFile = new ArrayList<>();
+			// List<String> validationFile = new ArrayList<>();
 
 			BufferedReader br = new BufferedReader(new FileReader(csvFile));
+			List<String> validationFile = Files.readAllLines(Paths.get(csvFile));
+
 			while ((line = br.readLine()) != null) // returns a Boolean value
 			{
 				String[] grouped = line.split(splitBy); // use comma as separator
 				validationFile.add(line);
+
 			}
 			List<String> validationFileCopy = Collections.unmodifiableList(validationFile);
-			// System.out.println(validationFile);
+
 			for (String lineres : validationFile) {
 				int comp = Collections.binarySearch(validationFileCopy, lineres, new ComparatorLine());
 				if (comp > 0) {
 					System.out.println(lineres);
 				}
 			}
+			Set<String> uniqueLinesOnly = new HashSet<>(validationFile);
+			System.out.println("uniqueLinesOnly" + uniqueLinesOnly);
 			Set<String> uniqueLines = new HashSet<>();
 			Set<String> duplicateLines = new HashSet<>();
 			for (String newline : validationFile) {
 				if (!uniqueLines.add(newline.toLowerCase())) {
-				 duplicateLines.add(newline.toLowerCase());
+					duplicateLines.add(newline.toLowerCase());
 				}
 			}
-			Set<String> uniques = new HashSet<>();      
-			List<Object> duplicates = validationFile.stream().filter(i->!uniqueLines.add(i)).collect(Collectors.toList());
-		    System.out.println("duplicateLines" +duplicates);
+			Set<String> uniques = new HashSet<>();
+			List<String> duplicates = validationFile.stream().filter(i -> !uniques.add(i)).collect(Collectors.toList());
+
+			System.out.println("duplicateLines" + duplicates);
 			System.out.println("uniqueLines" + uniqueLines);
-			 System.out.println("duplicateLines" +duplicateLines);
+			System.out.println("duplicateLines" + duplicateLines);
 			// Option 3 : unique lines and duplicate lines by Java Streams
 			/*
 			 * Set<String> uniquesJava8 = new HashSet<>(); List<String> duplicatesJava8 =
@@ -244,6 +270,13 @@ public class CMISQuery {
 		 * Console.WriteLine("\nDupes"); foreach (var name in dupes)
 		 * Console.WriteLine(name);
 		 */
+	}
+
+	public static boolean crunchifyIsNullOrEmpty(String crunchifyString) {
+
+		if (crunchifyString != null && !crunchifyString.trim().isEmpty())
+			return false;
+		return true;
 	}
 
 	public List<CsvModelData> listduplicatefiles() {
