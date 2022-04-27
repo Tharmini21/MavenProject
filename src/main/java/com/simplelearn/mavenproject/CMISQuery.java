@@ -183,20 +183,38 @@ public class CMISQuery {
 	}
 
 	public void duplicatefile() {
-		String csvFile = "C://Users//Tharmini//Downloads//DocumentsqlData-export.csv";
+		String csvFile = "C://Users//Tharmini//Downloads//sqlData-export.csv";
+		String duplicatefilePath = "C://Users//Tharmini//Downloads//duplicatefile-export.csv";
+
 		try {
+			BufferedWriter fileWriter = new BufferedWriter(new FileWriter(duplicatefilePath));
+			// write header line containing column names
+			fileWriter.write(
+					"cmis_objectId,cmis_name,cmis_createdBy,cmis_contentStreamFileName,cmis_contentStreamMimeType,cmis_contentStreamLength");
+
 			List<String> readAllLines = Files.readAllLines(Paths.get(csvFile));
 			Set<String> names = new HashSet<>();
 			/*
 			 * readAllLines.stream().map(s -> s.split(",")[1]).forEach(name -> { if
 			 * (!names.add(name)) { System.out.println("Duplicate name: " + name); } });
 			 */
+		
 			readAllLines.stream().forEach(record -> {
 				String name = record.split(",")[1];
 				if (!names.add(name)) {
 					System.out.println("Duplicate name: " + name + " with record " + record);
+					//System.out.println("SAME NAME ALREADY EXIST IN SITES:" + name);
+					try {
+						fileWriter.newLine();
+						fileWriter.write(record);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+
 				}
+
 			});
+			fileWriter.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
